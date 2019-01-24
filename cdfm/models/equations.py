@@ -20,6 +20,22 @@ def Iec(eind: int, cinds: List[int], Ve: np.ndarray, Vc: np.ndarray) -> DTYPE:
     """
     return np.sum(np.dot(Vc[cinds], Ve[eind]), axis=0)
 
+def p_Iec(eind: int, cinds: List[int], Ve: np.ndarray, Vc: np.ndarray, ps: np.ndarray) -> DTYPE:
+    """Expected strength of interaction between Entity and Competitors.
+
+    Parameters:
+        eind: an index of the target entity.
+        cinds: indices of competitors.
+        Ve: a matrix of latent vectors of entities. shape (p, k).
+        Vc: a matrix of latent vectors of competitors. shape (p, k).
+        ps: probabiities of interaction occurrence between 2 entities.
+
+    Returns:
+        res: strength of interaction between entity and competitors.
+    """
+    interactions = np.dot(Vc[cinds], Ve[eind])
+    return np.sum(np.multiply(ps, interactions), axis=0)
+
 def Ief(eind: int, x: np.ndarray, Ve: np.ndarray, Vf: np.ndarray) -> DTYPE:
     """Strength of interaction between Entity and its Features.
 
