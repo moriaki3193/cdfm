@@ -1,2 +1,4 @@
 [MESSAGE CONTROL]
-disable = invalid-name
+disable = invalid-name,
+          too-many-arguments,
+          too-many-instance-attributes
