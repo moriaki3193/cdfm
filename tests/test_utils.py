@@ -18,9 +18,9 @@ class TestUtils():
         """Setup testing context.
         """
         self.dataset = [
-            CDFMRow(0.5, 'a', 'x', {'y', 'z'}, np.array([1.0, 2.0, 3.0], dtype=DTYPE), None),
-            CDFMRow(-.5, 'a', 'y', {'x', 'z'}, np.array([1.0, 2.0, 3.0], dtype=DTYPE), None),
-            CDFMRow(0.0, 'a', 'z', {'x', 'y'}, np.array([1.0, 2.0, 3.0], dtype=DTYPE), None),
+            CDFMRow(0.5, 'a', 'x', ['y', 'z'], np.array([1.0, 2.0, 3.0], dtype=DTYPE), None),
+            CDFMRow(-.5, 'a', 'y', ['x', 'z'], np.array([1.0, 2.0, 3.0], dtype=DTYPE), None),
+            CDFMRow(0.0, 'a', 'z', ['x', 'y'], np.array([1.0, 2.0, 3.0], dtype=DTYPE), None),
         ]
         self.data_dir = dirname(abspath(__file__))
 
