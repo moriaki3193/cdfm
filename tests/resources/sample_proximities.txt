@@ -1,0 +1,6 @@
+qid:1 eid:x cid:y 1:1 2:1 # x y
+qid:1 eid:x cid:z 1:2 2:2 # x z
+qid:1 eid:y cid:z 1:3 2:3 # y z
+qid:2 eid:x cid:y 1:4 2:4 # x y
+qid:2 eid:x cid:z 1:5 2:5 # x z
+qid:2 eid:y cid:z 1:6 2:6 # y z
