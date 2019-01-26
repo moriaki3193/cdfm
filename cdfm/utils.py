@@ -2,12 +2,14 @@
 """Utilities module
 """
 import os
-from typing import Any, Callable, Iterable, List, Set
+from typing import Any, Callable, Iterable, List, Optional, Set
 from operator import itemgetter
 import numpy as np
 import pandas as pd
+from fastprogress import master_bar
 from .config import DTYPE
 from .consts import LABEL, QID, EID, CID, FEATURES, PROXIMITIES
+from .data import CDFMRow
 from .types import CDFMDataset, EntityID, EntIndMap
 
 
@@ -102,6 +104,54 @@ def load_cdfmdata(path: str,
             line = fp.readline()
 
     return pd.DataFrame(rows, columns=_columns)
+
+def build_cdfmdata(features: pd.DataFrame,
+                   proximities: Optional[pd.DataFrame] = None,
+                   verbose: bool = True) -> CDFMDataset:
+    """Merge features and proximities.
+
+    Parameters:
+        features: an instance returned by load_cdfmdata (mode='feature').
+        proximities: an instance returned by loadcdfmdata (mode='proximity').
+        verbose: display progress bar if True.
+
+    Returns:
+        data: CDFMDataset instance.
+    """
+    rows: CDFMDataset = []
+    append_to_rows = rows.append
+    group_feat = master_bar(features.groupby(QID)) if verbose else features.groupby(QID)
+    if proximities is None:
+        for i, (qid, group) in enumerate(group_feat):
+            entrant_ids = group[EID]
+            for _, record in group.iterrows():
+                label = record[LABEL]
+                eid = record[EID]
+                cids = [cid for cid in entrant_ids if cid != eid]
+                feat = record[FEATURES]
+                row = CDFMRow(label, qid, eid, cids, feat, None)
+                append_to_rows(row)
+            if verbose and ((i + 1) % 1000 == 0):
+                group_feat.write(f'{i + 1} groups processed...')
+    else:
+        _prox_idx: int = proximities.columns.get_loc(PROXIMITIES)
+        grouped_prox: pd.core.groupby.DataFrameGroupBy = proximities.groupby(QID)
+        for i, (qid, grouped_feat) in enumerate(group_feat):
+            _grouped_prox = grouped_prox.get_group(qid).groupby(EID)
+            entrant_ids = grouped_feat[EID]
+            for _, record in grouped_feat.iterrows():
+                label = record[LABEL]
+                eid = record[EID]
+                cids = [cid for cid in entrant_ids if cid != eid]
+                feat = record[FEATURES]
+                prox: List[np.ndarray] = []
+                for cid in cids:
+                    prox.append(_grouped_prox.get_group(eid).iat[0, _prox_idx])
+                row = CDFMRow(label, qid, eid, cids, feat, prox)
+                append_to_rows(row)
+            if verbose and ((i + 1) % 1000 == 0):
+                group_feat.write(f'{i + 1} groups processed...')
+    return rows
 
 def make_map(unique_ids: Iterable[EntityID]) -> EntIndMap:
     """f: entity_id -> entity_index

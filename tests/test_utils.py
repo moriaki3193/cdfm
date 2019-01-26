@@ -2,12 +2,14 @@
 """Testing utility functions.
 """
 from os.path import abspath, dirname, join
+import pytest
 import pandas as pd
 import numpy as np
 from cdfm.config import DTYPE
 from cdfm.consts import LABEL, QID, EID, CID, FEATURES, PROXIMITIES
 from cdfm.data import CDFMRow
-from cdfm.utils import load_cdfmdata, make_map, extract_unique_ids
+from cdfm.testing import is_equal_rows
+from cdfm.utils import load_cdfmdata, build_cdfmdata, make_map, extract_unique_ids
 
 
 class TestUtils():
@@ -67,6 +69,32 @@ class TestUtils():
         ], columns=(QID, EID, CID, PROXIMITIES))
         assert pd.testing.assert_frame_equal(df, expected_df) is None
         assert isinstance(df.iloc[0, 3], np.ndarray)
+
+    def test_build_cdfmdata(self) -> None:
+        feat_path = join(self.data_dir, 'resources', 'sample_features.txt')
+        features = load_cdfmdata(feat_path, 4)
+        # not using proximities
+        data1 = build_cdfmdata(features)
+        expected1 = [
+            CDFMRow(0.5, '1', 'x', ['y', 'z'], np.array([0.1, -.2, 0.3, 0.0], dtype=DTYPE), None),
+            CDFMRow(0.0, '1', 'y', ['x', 'z'], np.array([-.1, 0.2, 0.0, 0.4], dtype=DTYPE), None),
+            CDFMRow(-.5, '1', 'z', ['x', 'y'], np.array([0.0, -.2, 0.3, -.4], dtype=DTYPE), None),
+            CDFMRow(0.5, '2', 'y', ['z', 'w'], np.array([0.1, -.2, 0.3, 0.0], dtype=DTYPE), None),
+            CDFMRow(0.0, '2', 'z', ['y', 'w'], np.array([-.1, 0.2, 0.0, 0.4], dtype=DTYPE), None),
+            CDFMRow(-.5, '2', 'w', ['y', 'z'], np.array([0.0, -.2, 0.3, -.4], dtype=DTYPE), None),
+        ]
+        for this, that in zip(data1, expected1):
+            assert is_equal_rows(this, that)
+
+    def test_build_cdfmdata_with_proximities(self) -> None:
+        feat_path = join(self.data_dir, 'resources', 'train_data.txt')
+        prox_path = join(self.data_dir, 'resources', 'train_prox.txt')
+        features = load_cdfmdata(feat_path, 16)
+        proximities = load_cdfmdata(prox_path, 2, mode='proximity')
+        try:
+            res = build_cdfmdata(features, proximities)
+        except KeyError:
+            pytest.fail('failed to build dataset...')
 
     def test_extract_unique_ids(self) -> None:
         unique_ids = extract_unique_ids(self.dataset)
