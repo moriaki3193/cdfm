@@ -1,4 +1,8 @@
+[MASTER]
+max-line-length=100
+
 [MESSAGE CONTROL]
 disable = invalid-name,
           too-many-arguments,
-          too-many-instance-attributes
+          too-many-instance-attributes,
+          arguments-differ
