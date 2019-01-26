@@ -2,9 +2,9 @@
 """Type annotations.
 """
 from typing import Dict, List, Union
-from .data import Row
+from .data import CDFMRow
 
 
-Dataset = List[Row]
+CDFMDataset = List[CDFMRow]
 EntityID = Union[int, str]
 EntIndMap = Dict[EntityID, int]

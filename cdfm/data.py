@@ -5,4 +5,4 @@ from collections import namedtuple
 from .consts import LABEL, QID, EID, CIDS, FEATURES, PROXIMITIES
 
 
-Row = namedtuple('Row', (LABEL, QID, EID, CIDS, FEATURES, PROXIMITIES))
+CDFMRow = namedtuple('CDFMRow', (LABEL, QID, EID, CIDS, FEATURES, PROXIMITIES))
