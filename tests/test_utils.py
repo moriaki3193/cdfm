@@ -24,7 +24,7 @@ class TestUtils():
             CDFMRow(-.5, 'a', 'y', ['x', 'z'], np.array([1.0, 2.0, 3.0], dtype=DTYPE), None),
             CDFMRow(0.0, 'a', 'z', ['x', 'y'], np.array([1.0, 2.0, 3.0], dtype=DTYPE), None),
         ]
-        self.data_dir = dirname(abspath(__file__))
+        self.data_dir = join(dirname(abspath(__file__)), 'resources')
 
     def teardown_method(self, method) -> None:
         """Clean up testing context.
@@ -37,7 +37,7 @@ class TestUtils():
             - types and values in columns.
             - dtypes for FEATURES and PROXIMITIES columns.
         """
-        data_path = join(self.data_dir, 'resources', 'sample_features.txt')
+        data_path = join(self.data_dir, 'sample_features.txt')
         df = load_cdfmdata(data_path, ndim=4)
         expected_df = pd.DataFrame([
             (0.5, '1', 'x', np.array([0.1, -.2, 0.3, 0.0], dtype=DTYPE)),
@@ -57,21 +57,27 @@ class TestUtils():
             - types and values in columns.
             - dtypes for FEATURES and PROXIMITIES columns.
         """
-        data_path = join(self.data_dir, 'resources', 'sample_proximities.txt')
+        data_path = join(self.data_dir, 'sample_proximities.txt')
         df = load_cdfmdata(data_path, ndim=2, mode='proximity')
         expected_df = pd.DataFrame([
             ('1', 'x', 'y', np.array([1, 1], dtype=DTYPE)),
             ('1', 'x', 'z', np.array([2, 2], dtype=DTYPE)),
-            ('1', 'y', 'z', np.array([3, 3], dtype=DTYPE)),
-            ('2', 'x', 'y', np.array([4, 4], dtype=DTYPE)),
-            ('2', 'x', 'z', np.array([5, 5], dtype=DTYPE)),
-            ('2', 'y', 'z', np.array([6, 6], dtype=DTYPE)),
+            ('1', 'y', 'x', np.array([3, 3], dtype=DTYPE)),
+            ('1', 'y', 'z', np.array([4, 4], dtype=DTYPE)),
+            ('1', 'z', 'x', np.array([5, 5], dtype=DTYPE)),
+            ('1', 'z', 'y', np.array([6, 6], dtype=DTYPE)),
+            ('2', 'y', 'z', np.array([7, 7], dtype=DTYPE)),
+            ('2', 'y', 'w', np.array([8, 8], dtype=DTYPE)),
+            ('2', 'z', 'y', np.array([9, 9], dtype=DTYPE)),
+            ('2', 'z', 'w', np.array([1, 1], dtype=DTYPE)),
+            ('2', 'w', 'y', np.array([2, 2], dtype=DTYPE)),
+            ('2', 'w', 'z', np.array([3, 3], dtype=DTYPE)),
         ], columns=(QID, EID, CID, PROXIMITIES))
         assert pd.testing.assert_frame_equal(df, expected_df) is None
         assert isinstance(df.iloc[0, 3], np.ndarray)
 
     def test_build_cdfmdata(self) -> None:
-        feat_path = join(self.data_dir, 'resources', 'sample_features.txt')
+        feat_path = join(self.data_dir, 'sample_features.txt')
         features = load_cdfmdata(feat_path, 4)
         # not using proximities
         data1 = build_cdfmdata(features)
@@ -87,8 +93,8 @@ class TestUtils():
             assert is_equal_rows(this, that)
 
     def test_build_cdfmdata_with_proximities(self) -> None:
-        feat_path = join(self.data_dir, 'resources', 'train_data.txt')
-        prox_path = join(self.data_dir, 'resources', 'train_prox.txt')
+        feat_path = join(self.data_dir, 'sample_features.txt')
+        prox_path = join(self.data_dir, 'sample_proximities.txt')
         features = load_cdfmdata(feat_path, 16)
         proximities = load_cdfmdata(prox_path, 2, mode='proximity')
         try:

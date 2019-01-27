@@ -1,6 +1,12 @@
-qid:1 eid:x cid:y 1:1 2:1 # x y
-qid:1 eid:x cid:z 1:2 2:2 # x z
-qid:1 eid:y cid:z 1:3 2:3 # y z
-qid:2 eid:x cid:y 1:4 2:4 # x y
-qid:2 eid:x cid:z 1:5 2:5 # x z
-qid:2 eid:y cid:z 1:6 2:6 # y z
+qid:1 eid:x cid:y 1:1 2:1
+qid:1 eid:x cid:z 1:2 2:2
+qid:1 eid:y cid:x 1:3 2:3
+qid:1 eid:y cid:z 1:4 2:4
+qid:1 eid:z cid:x 1:5 2:5
+qid:1 eid:z cid:y 1:6 2:6
+qid:2 eid:y cid:z 1:7 2:7
+qid:2 eid:y cid:w 1:8 2:8
+qid:2 eid:z cid:y 1:9 2:9
+qid:2 eid:z cid:w 1:1 2:1
+qid:2 eid:w cid:y 1:2 2:2
+qid:2 eid:w cid:z 1:3 2:3
