@@ -1,0 +1,11 @@
+# scalers
+- scaler1: PRE_SI
+- scaler2: AVG_SI_4
+- scaler3: DIST_AVG_SI
+- scaler4: GO_AVG_SI
+- train: 特徴量のトレーニングデータセット
+- test: 特徴量のテストデータセット
+- train_data: 再整形したトレーニングデータセット
+- test_data: 再整形したテストデータセット
+- train_prox: 類似度のトレーニングデータセット
+- test_prox: 類似度のテストデータセット

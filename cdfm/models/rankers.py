@@ -77,7 +77,7 @@ class CDFMRanker(CDFMRankerMeta):
             self._update_eta(t)
             random.shuffle(_indices)
             if verbose:
-                parent_bar.write(f'Epoch {t + 1} (Score: {np.round(self.scores[t], 5)})')
+                parent_bar.write(f'Epoch {t + 1} [Score: {np.round(self.scores[t], 5)}]')
 
     def predict(self, data: CDFMDataset) -> np.ndarray:
         """Make prediction on a given data.
