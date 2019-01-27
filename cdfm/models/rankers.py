@@ -54,7 +54,6 @@ class CDFMRanker(CDFMRankerMeta):
         self._init_params(data)
         n_samples = len(data)
         _indices: List[int] = list(range(n_samples))
-        random.shuffle(_indices)
         # model fitting
         parent_bar = master_bar(range(self.n_iter)) if verbose else range(self.n_iter)
         for t in parent_bar:
@@ -76,6 +75,7 @@ class CDFMRanker(CDFMRankerMeta):
                     parent_bar.child.comment = f'Epoch {t + 1}'
             self.scores[t] = self._evaluate_score(pred_labels, obs_labels)
             self._update_eta(t)
+            random.shuffle(_indices)
             if verbose:
                 parent_bar.write(f'Epoch {t + 1} (Score: {np.round(self.scores[t], 5)})')
 
@@ -88,7 +88,7 @@ class CDFMRanker(CDFMRankerMeta):
         Returns:
             pred_labels: an array of predicted labels. shape (#samples, )
         """
-        pred_labels: np.ndarray = np.empty(len(data))
+        pred_labels: np.ndarray = np.empty(len(data), dtype=DTYPE)
         for i, row in enumerate(data):
             eind = self.map[row[self._eid_loc]]
             cinds = [self.map[cid] for cid in row[self._cids_loc]]

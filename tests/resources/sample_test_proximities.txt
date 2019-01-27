@@ -1,0 +1,6 @@
+qid:3 eid:y cid:z 1:7 2:7
+qid:3 eid:y cid:w 1:8 2:8
+qid:3 eid:z cid:y 1:9 2:9
+qid:3 eid:z cid:w 1:1 2:1
+qid:3 eid:w cid:y 1:2 2:2
+qid:3 eid:w cid:z 1:3 2:3

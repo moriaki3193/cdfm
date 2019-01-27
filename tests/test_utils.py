@@ -37,7 +37,7 @@ class TestUtils():
             - types and values in columns.
             - dtypes for FEATURES and PROXIMITIES columns.
         """
-        data_path = join(self.data_dir, 'sample_features.txt')
+        data_path = join(self.data_dir, 'sample_train_features.txt')
         df = load_cdfmdata(data_path, ndim=4)
         expected_df = pd.DataFrame([
             (0.5, '1', 'x', np.array([0.1, -.2, 0.3, 0.0], dtype=DTYPE)),
@@ -57,7 +57,7 @@ class TestUtils():
             - types and values in columns.
             - dtypes for FEATURES and PROXIMITIES columns.
         """
-        data_path = join(self.data_dir, 'sample_proximities.txt')
+        data_path = join(self.data_dir, 'sample_train_proximities.txt')
         df = load_cdfmdata(data_path, ndim=2, mode='proximity')
         expected_df = pd.DataFrame([
             ('1', 'x', 'y', np.array([1, 1], dtype=DTYPE)),
@@ -77,7 +77,7 @@ class TestUtils():
         assert isinstance(df.iloc[0, 3], np.ndarray)
 
     def test_build_cdfmdata(self) -> None:
-        feat_path = join(self.data_dir, 'sample_features.txt')
+        feat_path = join(self.data_dir, 'sample_train_features.txt')
         features = load_cdfmdata(feat_path, 4)
         # not using proximities
         data1 = build_cdfmdata(features)
@@ -93,8 +93,8 @@ class TestUtils():
             assert is_equal_rows(this, that)
 
     def test_build_cdfmdata_with_proximities(self) -> None:
-        feat_path = join(self.data_dir, 'sample_features.txt')
-        prox_path = join(self.data_dir, 'sample_proximities.txt')
+        feat_path = join(self.data_dir, 'sample_train_features.txt')
+        prox_path = join(self.data_dir, 'sample_train_proximities.txt')
         features = load_cdfmdata(feat_path, 16)
         proximities = load_cdfmdata(prox_path, 2, mode='proximity')
         try:
