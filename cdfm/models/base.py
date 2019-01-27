@@ -88,7 +88,7 @@ class CDFMRankerMeta(metaclass=ABCMeta):
     def _update_eta(self, t) -> None:
         """Update learning rate by Robbins-Monro method.
         """
-        self.eta *= DTYPE(t + 1 / t + 2)
+        self.eta *= DTYPE((t + 1) / (t + 2))
 
     @abstractmethod
     def fit(self) -> None:
