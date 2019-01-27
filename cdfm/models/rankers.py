@@ -32,9 +32,9 @@ class CDFMRanker(CDFMRankerMeta):
             - np.multiply(self.l2_w, self.w)
         coef_Ve: np.ndarray = Diff.Iec_ve(cinds, self.Vc) \
             + Diff.Ief_ve(x, self.Vf) \
-            - np.multiply(self.l2_V, self.Ve)
+            - np.multiply(self.l2_V, self.Ve[eind])
         coef_Vc: np.ndarray = Diff.Iec_vc(eind, self.Ve) \
-            - np.multiply(self.l2_V, self.Vc)
+            - np.multiply(self.l2_V, self.Vc[cinds])
         coef_Vf: np.ndarray = Diff.Ief_vf(eind, x, self.Ve) \
             + Diff.Iff_vf(x, self.Vf) \
             - np.multiply(self.l2_V, self.Vf)

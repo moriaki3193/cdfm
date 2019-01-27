@@ -49,7 +49,7 @@ class CDFMRankerMeta(metaclass=ABCMeta):
                  l2_w: float = 1e-2,
                  l2_V: float = 1e-2,
                  n_iter: int = 1000,
-                 init_eta: float = 1e-1,
+                 init_eta: float = 1e-2,
                  init_scale: float = 1e-2) -> None:
         self.k = k
         self.l2_w = DTYPE(l2_w)
@@ -88,7 +88,7 @@ class CDFMRankerMeta(metaclass=ABCMeta):
     def _update_eta(self, t) -> None:
         """Update learning rate by Robbins-Monro method.
         """
-        self.eta *= DTYPE((t + 1) / (t + 2))
+        # self.eta *= DTYPE((t + 1) / (t + 2))
 
     @abstractmethod
     def fit(self) -> None:
