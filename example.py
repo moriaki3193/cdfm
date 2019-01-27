@@ -80,5 +80,5 @@ if __name__ == '__main__':
     print(f'\nfitted model : {dump_path}')
 
     # show result
-    print(f'\nTrain Score: {self.model.scores[-1]}')
+    print(f'\nTrain Score: {model.scores[-1]}')
     print(f'Test Score: {compute_RMSE(pred_labels, obs_labels)}')
