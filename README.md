@@ -122,6 +122,19 @@ test = build_cdfmdata(test_df)
 pred = model.predict(test)
 ```
 
+## examples
+Tutorial using NAR Horse Racing dataset.
+
+```shell
+# pwd
+# >>> path/to/cdfm
+$ mkdir dumps
+$ mkdir dumps/models       # pickle dumps fitted models.
+$ mkdir dumps/predictions  # pandas dumps evaluation dataset.
+
+$ python example.py --k 2 --n-iter 100
+```
+
 ## development
 ```shell
 # 1. install develop dependencies
