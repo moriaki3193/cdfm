@@ -1,6 +1,7 @@
 # -*- coding: utf-8 -*-
 """Testing structures.
 """
+from os.path import abspath, dirname, join
 import numpy as np
 from cdfm.config import DTYPE
 from cdfm.structs import Document, Query, Data
@@ -14,12 +15,12 @@ class TestStructs():
         """Setup testing context.
         """
         # Documents
-        self.doc1 = Document('a', np.ndarray([1, 1, 1], dtype=DTYPE))
-        self.doc2 = Document('b', np.ndarray([2, 2, 2], dtype=DTYPE))
-        self.doc3 = Document('c', np.ndarray([3, 3, 3], dtype=DTYPE))
-        self.doc4 = Document('a', np.ndarray([4, 4, 4], dtype=DTYPE))
-        self.doc5 = Document('b', np.ndarray([5, 5, 5], dtype=DTYPE))
-        self.doc6 = Document('c', np.ndarray([6, 6, 6], dtype=DTYPE))
+        self.doc1 = Document('a', np.ndarray([1, 1, 1], dtype=DTYPE), DTYPE(1.0))
+        self.doc2 = Document('b', np.ndarray([2, 2, 2], dtype=DTYPE), DTYPE(2.0))
+        self.doc3 = Document('c', np.ndarray([3, 3, 3], dtype=DTYPE), DTYPE(3.0))
+        self.doc4 = Document('a', np.ndarray([4, 4, 4], dtype=DTYPE), DTYPE(4.0))
+        self.doc5 = Document('b', np.ndarray([5, 5, 5], dtype=DTYPE), DTYPE(5.0))
+        self.doc6 = Document('c', np.ndarray([6, 6, 6], dtype=DTYPE), DTYPE(6.0))
         # Queries
         self.query1 = Query('x', [self.doc1, self.doc2, self.doc3])
         self.query2 = Query('y', [self.doc4, self.doc5, self.doc6])
@@ -38,6 +39,25 @@ class TestStructs():
         assert self.data.lookup(self.doc3.id) == self.data.lookup(self.doc6.id)
         # Should return len(`Unique Documents`).
         assert self.data.lookup('unregistered') == 3
+
+    def test_data_from_file(self) -> None:
+        # pylint: disable=missing-docstring
+        fname = 'sample_train_features.txt'
+        p = join(dirname(abspath(__file__)), 'resources', fname)
+        data = Data.from_file(p, 4)
+        expected = Data([
+            Query('1', [
+                Document('x', np.array([0.1, -.2, 0.3, 0.0], dtype=DTYPE), DTYPE(0.5)),
+                Document('y', np.array([-.1, 0.2, 0.0, 0.4], dtype=DTYPE), DTYPE(0.0)),
+                Document('z', np.array([0.0, -.2, 0.3, -.4], dtype=DTYPE), DTYPE(-.5)),
+            ]),
+            Query('2', [
+                Document('y', np.array([0.1, -.2, 0.3, 0.0], dtype=DTYPE), DTYPE(0.5)),
+                Document('z', np.array([-.1, 0.2, 0.0, 0.4], dtype=DTYPE), DTYPE(0.0)),
+                Document('w', np.array([0.0, -.2, 0.3, -.4], dtype=DTYPE), DTYPE(-.5)),
+            ]),
+        ])
+        assert data == expected
 
     def test_query_extract_others(self) -> None:
         # pylint: disable=missing-docstring
