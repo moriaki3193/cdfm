@@ -31,15 +31,6 @@ class TestStructs():
         """Clean up testing context.
         """
 
-    def test_data_lookup(self) -> None:
-        # pylint: disable=missing-docstring
-        # Extract indices of registered documents.
-        assert self.data.lookup(self.doc1.id) == self.data.lookup(self.doc4.id)
-        assert self.data.lookup(self.doc2.id) == self.data.lookup(self.doc5.id)
-        assert self.data.lookup(self.doc3.id) == self.data.lookup(self.doc6.id)
-        # Should return len(`Unique Documents`).
-        assert self.data.lookup('unregistered') == 3
-
     def test_data_from_file(self) -> None:
         # pylint: disable=missing-docstring
         fname = 'sample_train_features.txt'
@@ -58,6 +49,11 @@ class TestStructs():
             ]),
         ])
         assert data == expected
+
+    def test_data_labels(self) -> None:
+        # pylint: disable=missing-docstring
+        labels = np.array([self.doc1.label, self.doc2.label, self.doc3.label])
+        assert np.array_equal(self.query1.labels, labels.astype(DTYPE))
 
     def test_query_extract_others(self) -> None:
         # pylint: disable=missing-docstring

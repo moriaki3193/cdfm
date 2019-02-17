@@ -2,13 +2,13 @@
 """Data structures used in this package.
 """
 import os
-import itertools
-from dataclasses import dataclass, field
-from typing import Dict, List, Tuple
+from dataclasses import dataclass
+from typing import List, Tuple
 from operator import itemgetter
 import numpy as np
 from .config import DTYPE
 from .types import DocumentID, QueryID, Vector, Label
+from .utils import _extract_first
 
 
 @dataclass(frozen=True)
@@ -34,9 +34,15 @@ class Query:
 
     def __eq__(self, that) -> bool:
         for d1, d2 in zip(self.docs, that.docs):
-            if not d1 == d2:
+            if d1 != d2:
                 return False
         return self.id == that.id
+
+    @property
+    def labels(self) -> np.ndarray:
+        """Labels of documents.
+        """
+        return np.array([doc.label for doc in self.docs], dtype=DTYPE)
 
     def extract_others(self, id_: DocumentID) -> List[DocumentID]:
         """Extract a list of document ids other than the given document.
@@ -49,12 +55,15 @@ class Data:
     """A dataset that contains queries.
     """
     queries: List[Query]
-    map: Dict[DocumentID, int] = field(init=False, compare=False)
 
-    def __post_init__(self) -> None:
-        lol = [[doc.id for doc in query.docs] for query in self.queries]
-        uniques = set(itertools.chain.from_iterable(lol))
-        self.map = {doc_id: idx for idx, doc_id in enumerate(uniques)}
+    def __eq__(self, that) -> bool:
+        get_id = lambda q: q.id
+        sorted_this = sorted(self.queries, key=get_id)
+        sorted_that = sorted(that.queries, key=get_id)
+        for q1, q2 in zip(sorted_this, sorted_that):
+            if q1 != q2:
+                return False
+        return True
 
     @classmethod
     def from_file(cls, path: str, ndim: int,
@@ -78,8 +87,6 @@ class Data:
         # Validation on a given path.
         if not os.path.isfile(path):
             raise FileNotFoundError(f'{path} not found.')
-
-        _extract_first = itemgetter(0)
 
         # Line parser
         def _parse(line: str) -> Tuple[QueryID, Document]:
@@ -116,10 +123,3 @@ class Data:
 
         queries = [Query(i2q[idx], docs) for idx, docs in enumerate(doc_ls)]
         return cls(queries)
-
-    def lookup(self, id_: DocumentID) -> int:
-        """Lookup an index of the document.
-
-        If there is no registered document id, return `max(Index) + 1`.
-        """
-        return self.map.get(id_, len(self.map))
