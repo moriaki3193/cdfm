@@ -4,7 +4,6 @@
 import os
 from dataclasses import dataclass
 from typing import List, Tuple
-from operator import itemgetter
 import numpy as np
 from .config import DTYPE
 from .types import DocumentID, QueryID, Vector, Label
@@ -44,7 +43,7 @@ class Query:
         """
         return np.array([doc.label for doc in self.docs], dtype=DTYPE)
 
-    def extract_others(self, id_: DocumentID) -> List[DocumentID]:
+    def other_ids(self, id_: DocumentID) -> List[DocumentID]:
         """Extract a list of document ids other than the given document.
         """
         return [doc.id for doc in self.docs if doc.id != id_]

@@ -2,7 +2,11 @@
 """Implementation of Learning to Rank models.
 """
 import random
-from typing import List
+import itertools
+import multiprocessing as mp
+from copy import deepcopy
+from functools import partial
+from typing import Callable, List, Tuple
 import numpy as np
 from fastprogress import master_bar, progress_bar
 from ..config import DTYPE
@@ -10,8 +14,146 @@ from .base import CDFMRankerMeta
 from . import equations as Eqn
 from . import differentials as Diff
 from ..data import CDFMRow
-from ..types import CDFMDataset
+from ..structs import Data, Query, Document
+from ..types import CDFMDataset, DocumentID, DocIdxMap
 from ..utils import _extract_first
+
+
+CDERankerParams = Tuple[DTYPE,       # b
+                        np.ndarray,  # w
+                        np.ndarray,  # Ve
+                        np.ndarray,  # Vc
+                        np.ndarray]  # Vf
+
+
+class CDERanker:
+    """Combination-dependent Entity Ranker.
+
+    Attributes:
+        k: #dimensions of latent vectors.
+        l2_w: L2 regularization on pointwise weights.
+        l2_Ve: L2 regularization on entity latent vectors.
+        l2_Vc: L2 regularization on competitor latent vectors.
+        l2_Vf: L2 regularization on feature latent vectors.
+        max_iter: #max-iterations when fitting.
+        eta: initial learning rate.
+        init_scale: v ~ Normal(0., scale=init_scale).
+        metric: evaluation measure.
+
+    Methods:
+        fit: model fitting using minibatch Gradient Descent algorithm.
+        predict: make prediction on a given dataset.
+    """
+
+    def __init__(self,
+                 k: int = 8,
+                 l2_w: float = 1e-2,
+                 l2_Ve: float = 1e-1,
+                 l2_Vc: float = 1e-1,
+                 l2_Vf: float = 1e-2,
+                 max_iter: int = 100,
+                 init_eta: float = 1e-2,
+                 init_scale: float = 1e-2,
+                 metric: str = 'NDCG@5') -> None:
+        self.k = k
+        self.l2_w = DTYPE(l2_w)
+        self.l2_Ve = DTYPE(l2_Ve)
+        self.l2_Vc = DTYPE(l2_Vc)
+        self.l2_Vf = DTYPE(l2_Vf)
+        self.max_iter = max_iter
+        self.eta = DTYPE(init_eta)
+        self.init_scale = DTYPE(init_scale)
+        self.metric = metric
+        # Variables set dynamically
+        self.map: DocIdxMap
+        self.b: DTYPE
+        self.w: np.ndarray
+        self.Ve: np.ndarray
+        self.Vc: np.ndarray
+        self.Vf: np.ndarray
+
+    def _init_map(self, data: Data) -> None:
+        lol = [[d.id for d in q.docs] for q in data.queries]
+        uniques = set(itertools.chain.from_iterable(lol))
+        self.map = {doc_id: idx for idx, doc_id in enumerate(uniques)}
+
+    def _init_params(self, data: Data) -> None:
+        first_query = _extract_first(data.queries)
+        first_doc = _extract_first(first_query.docs)
+        p = len(self.map) + 1
+        (q, ) = first_doc.vec.shape
+        self.b = DTYPE(0.)
+        self.w = np.zeros(q, dtype=DTYPE)
+        self.Ve = np.random.normal(scale=self.init_scale, size=(p, self.k)).astype(DTYPE)
+        self.Vc = np.random.normal(scale=self.init_scale, size=(p, self.k)).astype(DTYPE)
+        self.Vf = np.random.normal(scale=self.init_scale, size=(q, self.k)).astype(DTYPE)
+
+    @profile
+    def _update_params(self, query: Query) -> None:
+        # pylint: disable=too-many-locals
+        Ve = deepcopy(self.Ve)
+        Vc = deepcopy(self.Vc)
+        Vf = deepcopy(self.Vf)
+        pred_err: np.ndarray = self._minibatch_predict(query) - query.labels
+        docidx = [self.map.get(d.id, len(self.map)) for d in query.docs]
+        step = self.eta / DTYPE(len(query.docs))
+        for i, (err, doc) in enumerate(zip(pred_err, query.docs)):
+            # compute nabra
+            eidx = docidx[i]
+            cidx = [idx for h, idx in enumerate(docidx) if h != i]
+            coef_Ve = Diff.Iec_ve(cidx, Vc) + Diff.Ief_ve(doc.vec, Vf)
+            coef_Vc = Diff.Iec_vc(eidx, Ve)
+            coef_Vf = Diff.Ief_vf(eidx, doc.vec, Ve) + Diff.Iff_vf(doc.vec, Vf)
+            nabra_b = err * DTYPE(1.0)
+            nabra_w = err * doc.vec + self.l2_w * doc.vec
+            nabra_Ve = err * coef_Ve + self.l2_Ve * Ve[eidx]
+            nabra_Vc = err * coef_Vc + self.l2_Vc * Vc[cidx]
+            nabra_Vf = err * coef_Vf + self.l2_Vf * Vf
+            # update params
+            self.b -= np.multiply(step, nabra_b)
+            self.w -= np.multiply(step, nabra_w)
+            self.Ve[eidx] -= np.multiply(step, nabra_Ve)
+            self.Vc[cidx] -= np.multiply(step, nabra_Vc)
+            self.Vf -= np.multiply(step, nabra_Vf)
+
+    @profile
+    def _minibatch_predict(self, query: Query) -> np.ndarray:
+        pred_labels: List[DTYPE] = []
+        docidx = [self.map.get(d.id, len(self.map)) for d in query.docs]
+        for i, doc in enumerate(query.docs):
+            eidx = docidx[i]
+            cidx = [idx for h, idx in enumerate(docidx) if h != i]
+            iec = Eqn.Iec(eidx, cidx, self.Ve, self.Vc)
+            ief = Eqn.Ief(eidx, doc.vec, self.Ve, self.Vf)
+            iff = Eqn.Iff(doc.vec, self.Vf)
+            pred_labels.append(self.b + np.dot(self.w, doc.vec) + iec + ief + iff)
+        return np.array(pred_labels, dtype=DTYPE)
+
+    def fit(self, data: Data, verbose: bool = True) -> None:
+        """Training the model.
+
+        Parameters:
+            data: Data instance.
+            verbose: Whether display training processes.
+        """
+        self._init_map(data)
+        self._init_params(data)
+        _indices: List[int] = list(range(len(data.queries)))
+        mbar = master_bar(range(self.max_iter) if verbose else range(self.max_iter))
+        # t: epoch indexer, n: query indexer
+        for t in mbar:
+            pbar = progress_bar(_indices, parent=mbar) if verbose else _indices
+            for n in pbar:
+                self._update_params(data.queries[n])
+                if verbose:
+                    mbar.child.comment = f'Epoch {t + 1}'
+            random.shuffle(_indices)
+            score = DTYPE(0.0)
+            if verbose:
+                mbar.write(f'Epoch {t + 1} Avg. {self.metric}: {np.round(score, 5)}')
+
+    def predict(self) -> None:
+        pass
 
 
 class CDFMRanker(CDFMRankerMeta):
